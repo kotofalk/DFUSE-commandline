@@ -431,6 +431,7 @@ void create_dfuprefix(int size) {
 
 }
 
+
 void create_dfusuffix(void) {
 
     //bcdDevice
