@@ -53,7 +53,7 @@ int ActuallyDataBytesLoaded = 0;
 int load_file(char *filename);
 char tprefix[274];
 char prefix[11];
-char suffix[65536];
+char suffix[16];
 TLargeElement *largeElements;
 TImageElement *imageElements;
 
