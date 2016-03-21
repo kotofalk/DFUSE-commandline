@@ -1,0 +1,11 @@
+eclipse.preferences.version=1
+environment/project/org.eclipse.cdt.msvc.exe.debug.2066060664/PATH/delimiter=;
+environment/project/org.eclipse.cdt.msvc.exe.debug.2066060664/PATH/operation=replace
+environment/project/org.eclipse.cdt.msvc.exe.debug.2066060664/PATH/value=${_MINGW}
+environment/project/org.eclipse.cdt.msvc.exe.debug.2066060664/append=true
+environment/project/org.eclipse.cdt.msvc.exe.debug.2066060664/appendContributed=true
+environment/project/org.eclipse.cdt.msvc.exe.release.169668299/PATH/delimiter=;
+environment/project/org.eclipse.cdt.msvc.exe.release.169668299/PATH/operation=replace
+environment/project/org.eclipse.cdt.msvc.exe.release.169668299/PATH/value=${_MINGW}
+environment/project/org.eclipse.cdt.msvc.exe.release.169668299/append=true
+environment/project/org.eclipse.cdt.msvc.exe.release.169668299/appendContributed=true
