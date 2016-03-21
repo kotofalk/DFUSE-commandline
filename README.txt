@@ -1,4 +1,7 @@
-*dfu commandline*
+This is a fork of Brieuc's *dfu commandline*project.
+
+The core of program was changed due wrong dfu generating from gcc hex outputs.
+The Program edited in MinGW and Eclipse Mars.1
 
 dfu command line project is intended to be used by stm32 programmers. 
 
