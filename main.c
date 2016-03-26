@@ -78,7 +78,7 @@ int main(int argc, const char *argv[]) {
     filename = argv[1];
     if (load_file((char*) filename)==0){
         printf("Error! Seems like it was not a hex file. Exiting...");
-        return 0;
+        return -1;
     }
     printf("Compiling %d small elements into a few big ones...\n",numOfElements);
     create_image();
