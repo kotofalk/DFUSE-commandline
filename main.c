@@ -77,7 +77,7 @@ int main(int argc, const char *argv[]) {
     printf("Loading the file...\n");
     filename = argv[1];
     if (load_file((char*) filename)==0){
-        printf("Error! Seems like it was not a hex file. Exiting...");
+        printf("Error! Seems like it was not a hex file. Exit...\r\n");
         return -1;
     }
     printf("Compiling %d small elements into a few big ones...\n",numOfElements);
@@ -141,10 +141,7 @@ int main(int argc, const char *argv[]) {
     return 0;
 }
 
-Hexline parse_hex_line(theline, bytes, addr, num, code)
-char *theline;
-int *addr, *num, *code;
-int bytes[];
+Hexline parse_hex_line(char *theline, int bytes[], int *addr, int *num, int *code)
 {
     int sum, len, cksum;
     Hexline ret;
@@ -197,135 +194,145 @@ int bytes[];
 }
 
 int load_file(filename)
-char *filename;
+     char *filename;
 {
-    char line[1000];
-    FILE *fin;
-    int addr, n,status, bytes[256];
-    Hexline temp;
-    int i,j=0;
-    uint8_t maxLen = 0;
-    int offset = 0;
-    uint8_t *pData;
-    uint8_t eofin;
-    if (strlen(filename) == 0)
+  char line[1000];
+  FILE *fin=0;
+  int addr=0, n=0,status=0, bytes[256];
+  Hexline temp;
+  int i,j=0;
+  int offset = 0;
+  uint8_t *pData=0;
+  uint8_t eofin=0;
+  uint32_t totalDataBytes = 0;
+  uint32_t maxLen = 0;
+  temp.type=0;
+  temp.data=0;
+  temp.adress=0;
+  temp.lenght=0;
+  uint32_t tempstrlength = 0;
+    
+    
+  if (strlen(filename) == 0)
     {
-        printf("   Can't load a file without the filename.");
-        printf("  '?' for help\n");
-        return 0;
+      printf("   Can't load a file without the filename.");
+      printf("  '?' for help\n");
+      return 0;
     }
 
-    fin = fopen(filename, "r");
-    if (fin == NULL)
+  fin = fopen(filename, "r");
+  if (fin == NULL)
     {
-        printf("   Can't open file '%s' for reading.\n", filename);
-        return 0;
+      printf("   Can't open file '%s' for reading.\n", filename);
+      return 0;
+    }
+    
+  while (!feof(fin) && !ferror(fin))
+    {
+      //line[0] = '\0';
+      fgets(&line[0], 1000, fin);
+      tempstrlength = strlen(&line[0]);
+      if (line[tempstrlength-1] == '\n')
+	line[tempstrlength-1] = '\0';
+      if (line[tempstrlength-1] == '\r')
+	line[tempstrlength-1] = '\0';
+      temp = parse_hex_line(line, bytes, &addr, &n, &status);
+
+      if(temp.type == 0)
+	{
+          totalDataBytes = totalDataBytes + temp.lenght;
+          if (maxLen < temp.lenght) maxLen = temp.lenght;
+	}
+
     }
 
-    while (!feof(fin) && !ferror(fin))
-    {
-        line[0] = '\0';
-        fgets(line, 1000, fin);
-        if (line[strlen(line)-1] == '\n')
-        line[strlen(line)-1] = '\0';
-        if (line[strlen(line)-1] == '\r')
-        line[strlen(line)-1] = '\0';
-        temp = parse_hex_line(line, bytes, &addr, &n, &status);
+  printf("%d Bytes in file\n",totalDataBytes);
+  imageElements = (TImageElement*)malloc(totalDataBytes*10);
 
-        if(temp.type == 0)
+  rewind(fin);
+  eofin = 0;
+  while (!feof(fin) && !ferror(fin)&&!eofin)
+    {
+      line[0] = '\0';
+      fgets(line, 1000, fin);
+      if (line[strlen(line)-1] == '\n')
+        line[strlen(line)-1] = '\0';
+      if (line[strlen(line)-1] == '\r')
+        line[strlen(line)-1] = '\0';
+      temp = parse_hex_line(line, bytes, &addr, &n, &status);
+
+      switch(temp.type)
         {
-            totalDataBytes = totalDataBytes + temp.lenght;
-            if (maxLen < temp.lenght) maxLen = temp.lenght;
-        }
+	case 0 :
+	  //printf("%s\n",line);
+	  imageElements[numOfElements].address = offset + temp.adress;
+	  pData = (uint8_t*)temp.data;
+	  for (i = 0;i<temp.lenght;i++)
+	    {
+	      imageElements[numOfElements].data[i] = *pData;
+	      pData+=4;
 
-    }
+	    }
 
-    printf("%d Bytes in file\n",totalDataBytes);
-    imageElements = (TImageElement*)malloc(totalDataBytes*10);
+	  imageElements[numOfElements].size = temp.lenght;
+	  ActuallyDataBytesLoaded +=temp.lenght;
+	  ;
 
-    rewind(fin);
-    eofin = 0;
-    while (!feof(fin) && !ferror(fin)&&!eofin)
-    {
-        line[0] = '\0';
-        fgets(line, 1000, fin);
-        if (line[strlen(line)-1] == '\n')
-        line[strlen(line)-1] = '\0';
-        if (line[strlen(line)-1] == '\r')
-        line[strlen(line)-1] = '\0';
-        temp = parse_hex_line(line, bytes, &addr, &n, &status);
-
-        switch(temp.type)
-        {
-            case 0 :
-                //printf("%s\n",line);
-                imageElements[numOfElements].address = offset + temp.adress;
-                pData = (uint8_t*)temp.data;
-                for (i = 0;i<temp.lenght;i++)
-                {
-                    imageElements[numOfElements].data[i] = *pData;
-                    pData+=4;
-
-                }
-
-                imageElements[numOfElements].size = temp.lenght;
-                ActuallyDataBytesLoaded +=temp.lenght;
-                ;
-
-            for (i = 0; i<imageElements[numOfElements].size;i++)
-               // printf("D%02x ",imageElements[numOfElements].data[i]);
-           // printf("saved\n");
+	  for (i = 0; i<imageElements[numOfElements].size;i++)
+	    // printf("D%02x ",imageElements[numOfElements].data[i]);
+	    // printf("saved\n");
 
             numOfElements++;
-            break;
+	  break;
 
-            case 1 :  // End of hex file
-                //printf("Found type code %d: end of file.\n",temp.type);
-                eofin = 1;
-            break;
+	case 1 :  // End of hex file
+	  //printf("Found type code %d: end of file.\n",temp.type);
+	  eofin = 1;
+	  break;
 
-            case 2 :  // Start of segment. Not implemented.
-                printf("Error! Found type code %d. It not supported in this version. \n",temp.type);
-                eofin = 1;
-            break;
+	case 2 :  // Start of segment. Not implemented.
+	  printf("Error! Found type code %d. It not supported in this version. \n",temp.type);
+	  eofin = 1;
+	  break;
 
-            case 4 :  // start of segment
-                //printf(line);
-                offset = 0;
-                for (j=0;j<temp.lenght;j++)
-                {
-                //    printf("%02x",*(temp.data+j));
-                    offset |= *(temp.data+j);
-                    offset<<=8;
-                }
-                offset<<=8;
+	case 4 :  // start of segment
+	  //printf(line);
+	  offset = 0;
+	  for (j=0;j<temp.lenght;j++)
+	    {
+	      //    printf("%02x",*(temp.data+j));
+	      offset |= *(temp.data+j);
+	      offset<<=8;
+	    }
+	  offset<<=8;
 
-                printf("\nStart of segment detected. Code starts at 0x%08x\n", offset);
-            break;
+	  printf("\nStart of segment detected. Code starts at 0x%08x\n", offset);
+	  break;
 
-            case 5 :    // not used in ARM arch
-                printf("Found type code %d. Ignored.\n",temp.type);
-            break;
-            case 3 :    // not used in ARM arch
-                printf("Found type code %d. Ignored.\n",temp.type);
-            break;
+	case 5 :    // not used in ARM arch
+	  printf("Found type code %d. Ignored.\n",temp.type);
+	  break;
+	case 3 :    // not used in ARM arch
+	  printf("Found type code %d. Ignored.\n",temp.type);
+	  break;
 
-            default :
-                printf("Error: bad type code : %d\n",temp.type);
-            break;
+	default :
+	  printf("Error: bad type code : %d\n",temp.type);
+	  break;
         }
 
     }
 
-    fclose(fin);
-    printf("   Loaded %d bytes in %d DFU image elements.\n", ActuallyDataBytesLoaded, numOfElements);
-    return ActuallyDataBytesLoaded;
+  fclose(fin);
+  printf("   Loaded %d bytes in %d DFU image elements.\n", ActuallyDataBytesLoaded, numOfElements);
+    
+  return ActuallyDataBytesLoaded;
 }
 
 
 TLargeElement    CreateLargeElement(uint32_t first, uint32_t count){
     uint32_t i, size=0;
-    TLargeElement out;
+     TLargeElement out;
 
 
     //size calculation
@@ -458,6 +465,7 @@ void create_dfusuffix(void) {
 
 void    create_image(void){
     uint32_t i, largeElementsCount = 0,first=0,count=1;
+  
      largeElements = (TLargeElement*)malloc(numOfElements*sizeof(TLargeElement));
     for (i=0;i<numOfElements-1;i++){
         if (((imageElements[i].address + imageElements[i].size)==(imageElements[i+1].address))){
